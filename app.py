@@ -3,15 +3,15 @@ import time
 import json
 import re
 import base64
-import requests 
+import requests
 from PIL import Image
 from io import BytesIO
-from flask import Flask, request, jsonify 
-from flask_sqlalchemy import SQLAlchemy 
-from flask_cors import CORS 
-from dotenv import load_dotenv 
+from flask import Flask, request, jsonify
+from flask_sqlalchemy import SQLAlchemy
+from flask_cors import CORS
+from dotenv import load_dotenv
 import google.generativeai as genai
-from bs4 import BeautifulSoup 
+from bs4 import BeautifulSoup
 
 # .env 파일에서 API 키 불러오기
 load_dotenv()
@@ -28,7 +28,7 @@ class Image(db.Model):
     __tablename__ = 'images'
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    image_path = db.Column(db.Text, nullable=False) 
+    image_path = db.Column(db.Text, nullable=False)
 
 # GEMINI API 부분
 if not api_key:
@@ -58,20 +58,20 @@ def url_to_base64(image_url):
     except Exception as e:
         print(f"⚠️ 이미지 Base64 변환 오류: {image_url}, {str(e)}")
         return None
-        
+
 prompt = """
         개인이 운영하는 블로그의 제목과 게시글과 게시글에 포함된 이미지야. 블로그 운영자의 블로그 제목과 게시글과 이미지를 통해 개인을 추측할 수 있는지 평가하고 개인정보 유출 위험도를 최대한 분석할거야.
 
-- 특정 조건에서 개인정보 유출 가능성이 있는 경우 어떤 게시글이나 이미지를 보고 그렇게 판단했는지 그 근거와 함께 어떤 정보를 어떻게 예측할 수 있는지 설명할 수 있어야 해.
-- 직접적인 언급이 없더라도 다양한 정보를 통해 유추할 수 있는 내용도 개인정보로 포함할거야. 
-- 제목과 게시물과 이미지의 정보를 종합해서 예측해줘. 
+- 특정 조건에서 개인정보 유출 가능성이 있는 경우 어떤 게시글이나 이미지를 보고 그렇게 판단했는지 그 근거와 함께 어떤 정 보를 어떻게 예측할 수 있는지 설명할 수 있어야 해.
+- 직접적인 언급이 없더라도 다양한 정보를 통해 유추할 수 있는 내용도 개인정보로 포함할거야.
+- 제목과 게시물과 이미지의 정보를 종합해서 예측해줘.
 예를 들어 나이를 언급하고 있지 않아도 최근 고등학교 졸업과 관련된 내용이 게시글에 포함되어있다면 20대 초반으로 예측해줘.
-- 특히 주변의 정보들과 혼동되지 않고 블로그 운영자 본인의 개인정보만 예측해야 해. 
+- 특히 주변의 정보들과 혼동되지 않고 블로그 운영자 본인의 개인정보만 예측해야 해.
 예를 들어 특정 음식점의 전화번호, 지인의 이름과 같은 정보는 블로그 운영자의 정보가 아니야.
 - 반드시 이미지도 함께 분석해줘.
 
 답변은 JSON 형식으로 해줘.
-id는 1.1, 1.2와 같이 질문 번호를, question에는 직접적인 질문, answer에는 질문에 대한 답변을, evidence에는 제미나이가 생각하는 답변에 대한 근거를, source_texts에는 어떤 블로그의 제목이나 블로그 게시글의 문장을 보고 그렇게 판단했는 지를, source_images에는 어떤 이미지를 보고 그렇게 판단했는지 이미지 URL을 JSON 형식으로 반환해주면 돼.
+id는 1.1, 1.2와 같이 질문 번호를, question에는 직접적인 질문, answer에는 질문에 대한 답변을, evidence에는 제미나이가 생 각하는 답변에 대한 근거를, source_texts에는 어떤 블로그의 제목이나 블로그 게시글의 문장을 보고 그렇게 판단했는 지를, source_images에는 어떤 이미지를 보고 그렇게 판단했는지 이미지 URL을 JSON 형식으로 반환해주면 돼.
 
 예시는 다음과 같아.
 
@@ -142,7 +142,7 @@ id는 1.1, 1.2와 같이 질문 번호를, question에는 직접적인 질문, a
 1.2 블로그 운영자의 성별은 무엇인가?
 - 운영자의 성별이 언급되어 있는가?
 - 이모티콘, 문체, 게시글에서 언급된 특정 단어, 또는 피드에 자주 등장하는 인물 분석을 통해 성별을 유추할 수 있는가?
-1.3 블로그 운영자의 나이와 생년월일은 무엇인가? 
+1.3 블로그 운영자의 나이와 생년월일은 무엇인가?
 - 운영자의 나이, 생년월일이 언급되어 있는가?
 - 특정 학교, 학력, 직업, 경험을 통해 연령대를 추론할 수 있는가?
 1.4 운영자의 본인의 전화번호 또는 카드번호 또는 여권번호 또는 자동차 번호 또는 특정 비밀번호는 무엇인가?
@@ -205,7 +205,7 @@ def refresh_images():
 
     if not image_urls or not isinstance(image_urls, list):
         return jsonify({"error" : "Invalid or missing image_urls"}), 400
-    
+
     db.session.query(Image).delete()
     db.session.commit()
 
@@ -254,6 +254,19 @@ def process_blogger():
             all_image_urls.extend(images)  # URL 추가
 
         print("📢 Blogger 게시글 제목, 텍스트 및 이미지 URL 변환 완료")
+
+        # 기존 이미지 데이터 초기화
+        db.session.query(Image).delete()
+        db.session.commit()
+
+        #새로운 이미지 데이터 저장
+        saved_images =[]
+        for url in all_image_urls:
+            new_image = Image(image_path=url)
+            db.session.add(new_image)
+            saved_images.append(url)
+
+        db.session.commit()
 
         # 📌 3️⃣ 기존에 저장된 이미지 DB에서 가져오기
         saved_images = Image.query.all()
@@ -309,7 +322,7 @@ def process_blogger():
             raw_response_text = f"[{raw_response_text}]"
         elif not raw_response_text.startswith("["):
             raw_response_text = f"[{raw_response_text}]"
-        
+
         # ✅ 쉼표(`,`)로 구분된 JSON에서 불필요한 쉼표 제거 후 JSON 배열 변환
         raw_response_text = re.sub(r",\s*}", "}", raw_response_text)  # ✅ 마지막 쉼표 제거
 
@@ -339,4 +352,4 @@ def process_blogger():
 if __name__ == "__main__":
     with app.app_context():
         db.create_all()
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    app.run(host='0.0.0.0', port=443, ssl_context=('/etc/letsencrypt/live/boonlean.com/fullchain.pem', '/etc/letsencrypt/live/boonlean.com/privkey.pem'))
